@@ -8,9 +8,10 @@ def recognizeSpeech(engine, keywords : tuple = None, message: str = "Please spea
     with microphone as source:
         recognizer.adjust_for_ambient_noise(source)
 
-        engine.say(message)
-        engine.runAndWait()
-        engine.stop()
+        if message != None:
+            engine.say(message)
+            engine.runAndWait()
+            engine.stop()
 
         audio = recognizer.listen(source)
 
@@ -27,7 +28,7 @@ def recognizeSpeech(engine, keywords : tuple = None, message: str = "Please spea
                     if key in transcription:
                         return transcription, key
                 
-                return recognizeSpeech(engine, keywords = keywords, message = "The message you spoke was not one of the desired choices. Please speak again.")
+                return recognizeSpeech(engine, keywords = keywords, message = "The message you spoke was not one of the desired choices. Please speak again." if message != None else None)
             
         except sr.RequestError:
         # API was unreachable or unresponsive

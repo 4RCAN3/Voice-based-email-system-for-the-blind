@@ -3,6 +3,7 @@ import os
 import pyttsx3
 import voice, recognize
 import csv, time
+import json
 
 class creds():
 
@@ -14,7 +15,7 @@ class creds():
         load_dotenv()
         vSettings = dict(csv.reader(open('VoiceSettings.csv')))
         self.vSettings = vSettings
-        pass
+        
 
 
     def getCreds(self) -> tuple:
@@ -28,8 +29,9 @@ class creds():
         "myPass" (str) : Password for the respective email id
         """        
 
-        self.myMail = os.environ.get('EMAIL')
-        self.myPass = os.environ.get('PASS')
+        self.credentials = json.loads(open('creds.json').read())
+        self.myMail = self.credentials['Email']
+        self.myPass = self.credentials['Pass']
 
         def keyCreds(engine: object) -> tuple:
             """
@@ -70,7 +72,7 @@ class creds():
 
             Returns:
                 tuple: Returns the credentials
-            """            
+            """
 
             myMail = recognize.recognizeSpeech(engine, message = "Please speak your mail letter by letter now")
             myPass = recognize.recognizeSpeech(engine, message = "Please speak your password letter by letter now")
@@ -79,6 +81,23 @@ class creds():
             myMail, myPass = ''.join(myMail.split()), ''.join(myPass.split())
 
             return myMail, myPass
+        
+        def writeCreds(keys: tuple) -> tuple:
+            """Write the credentials to a secure .env file
+
+            Args:
+                keys (tuple): contains the mail id and password
+
+            Returns:
+                tuple: Returns the keys
+            """            
+            self.credentials['Email'] = keys[0]
+            self.credentials['Pass'] = keys[1]
+            with open('creds.json', 'w') as f:
+                jsonObj = json.dumps(self.credentials)
+                f.write(jsonObj)
+                
+            return keys
 
         def confirmation(engine: object, creds : tuple) -> tuple:
             """Asking the user toe confirm the credentials that they have entered
@@ -96,7 +115,7 @@ class creds():
 
             transcript, key = recognize.recognizeSpeech(engine, keywords = ('yes', 'no'), message = 'Please confirm your credentials by speaking yes or no')
             
-            return creds if key == 'yes' else enterCreds(engine)
+            return writeCreds((myMail, myPass)) if key == 'yes' else enterCreds(engine)
 
 
 
@@ -123,12 +142,10 @@ class creds():
             return confirmation(engine, keyCreds(engine)) if key == 'keyboard' else confirmation(engine, voiceCreds(engine))
 
 
-        if ((self.myMail, self.myPass) != (None, None)):
+        if ((self.myMail, self.myPass) != ("", "")):
             return (self.myMail, self.myPass)
         else:
             return enterCreds(voice.voice(self.vSettings))
-    
 
-
-creds = creds() 
-print(creds.getCreds())
+credents = creds()
+credents.getCreds()
